@@ -1,6 +1,7 @@
 # マジカル☆しょうゆ戦士 公式サイト
 
 架空のマンガ『マジカル☆しょうゆ戦士』の公式サイトです。
+https://th-auiwkn.github.io/magical-shoyu-senshi/
 
 > 変身しても、表情は変わらない。
 
