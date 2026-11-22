@@ -146,11 +146,24 @@
   shout.addEventListener('click', hideShout);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideShout(); });
 
-  /* ---------- 試し読み：拡大表示 ---------- */
+  /* ---------- 本編：エピソードへのリンク ---------- */
+  const openEpisode = (hash) => {
+    const episode = document.getElementById(hash.slice(1));
+    if (episode?.matches('details.episode')) episode.open = true;
+  };
+  openEpisode(window.location.hash);
+  window.addEventListener('hashchange', () => openEpisode(window.location.hash));
+  $$('a[href^="#episode-"]').forEach((link) => {
+    link.addEventListener('click', () => openEpisode(link.hash));
+  });
+
+  /* ---------- 本編：拡大表示 ---------- */
   const lb = $('#lightbox');
   const lbImg = $('#lbImg');
   const lbCount = $('#lbCount');
-  const pages = $$('.page');
+  const prevPage = $('.lb-prev', lb);
+  const nextPage = $('.lb-next', lb);
+  let pages = [];
   let current = 0;
   const show = (i) => {
     current = Math.max(0, Math.min(pages.length - 1, i));
@@ -158,16 +171,20 @@
     lbImg.src = img.getAttribute('src');
     lbImg.alt = img.alt;
     lbCount.textContent = `${current + 1} / ${pages.length}`;
-    $('.lb-prev', lb).disabled = current === 0;
-    $('.lb-next', lb).disabled = current === pages.length - 1;
+    prevPage.disabled = current === 0;
+    nextPage.disabled = current === pages.length - 1;
   };
-  pages.forEach((p, i) => p.addEventListener('click', () => {
-    show(i);
-    if (typeof lb.showModal === 'function') lb.showModal();
-  }));
+  $$('.episode .pages').forEach((pageList) => {
+    const episodePages = $$('.page', pageList);
+    episodePages.forEach((page, index) => page.addEventListener('click', () => {
+      pages = episodePages;
+      show(index);
+      if (typeof lb.showModal === 'function') lb.showModal();
+    }));
+  });
   $('.lb-close', lb).addEventListener('click', () => lb.close());
-  $('.lb-prev', lb).addEventListener('click', () => show(current - 1));
-  $('.lb-next', lb).addEventListener('click', () => show(current + 1));
+  prevPage.addEventListener('click', () => show(current - 1));
+  nextPage.addEventListener('click', () => show(current + 1));
   lb.addEventListener('click', (e) => { if (e.target === lb) lb.close(); });
   lb.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') show(current - 1);
