@@ -120,14 +120,19 @@
   /* ---------- 必殺技：技名を叫ぶ ---------- */
   const shout = $('#shout');
   const shoutName = $('#shoutName');
+  const shoutDisplayTime = 2400;
+  let shoutAudio;
   let shoutTimer = 0;
   const hideShout = () => {
     shout.hidden = true;
     clearTimeout(shoutTimer);
+    shoutAudio?.pause();
+    shoutAudio = undefined;
   };
   $$('.shout-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const name = btn.closest('[data-shout]').dataset.shout;
+      hideShout();
+      const { shout: name, shoutAudio: file } = btn.closest('[data-shout]').dataset;
       // 記号の位置で改行して、描き文字らしく2段に組む
       const parts = name.split(/(?<=[☆♡])/);
       shoutName.innerHTML = '';
@@ -136,11 +141,27 @@
         line.textContent = i === parts.length - 1 ? `${p}!!` : p;
         shoutName.appendChild(line);
       });
-      shout.hidden = true;
       void shout.offsetWidth;
       shout.hidden = false;
-      clearTimeout(shoutTimer);
-      shoutTimer = setTimeout(hideShout, 2400);
+
+      const voice = window.shoutVoices?.[file];
+      if (!voice) {
+        shoutTimer = setTimeout(hideShout, shoutDisplayTime);
+        return;
+      }
+
+      const audio = new Audio(voice);
+      shoutAudio = audio;
+      const shownAt = performance.now();
+      const closeAfterDisplay = () => {
+        if (shoutAudio !== audio) return;
+        clearTimeout(shoutTimer);
+        const remaining = Math.max(0, shoutDisplayTime - (performance.now() - shownAt));
+        shoutTimer = setTimeout(hideShout, remaining);
+      };
+      audio.addEventListener('ended', closeAfterDisplay, { once: true });
+      audio.addEventListener('error', closeAfterDisplay, { once: true });
+      audio.play().catch(closeAfterDisplay);
     });
   });
   shout.addEventListener('click', hideShout);
